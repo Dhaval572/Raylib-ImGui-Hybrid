@@ -1,12 +1,12 @@
 #pragma once
 #include "Application.h"
 
-extern Core::Application* CreateApplication();
+extern Core::FApplication* CreateApplication();
 
 int main(int argc, char** argv)
 {
-    Core::Application* app = CreateApplication();
-    app->Run();
-    delete app;
+    Core::FApplication* App = CreateApplication();
+    App->Run();
+    delete App;
     return 0;
 }

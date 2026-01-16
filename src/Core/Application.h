@@ -9,54 +9,54 @@
 // Forward declaration to avoid including internal headers in the public API if possible, 
 // strictly speaking user asked to use raylib methods, so including raylib.h here is good 
 // so they don't have to include it manually in every file deriving from Application.
-extern "C" {
+extern "C" 
+{
 #include "raylib.h"
 }
 
 struct GLFWwindow;
 
-namespace Core {
+namespace Core 
+{
 
-    class Application {
+    class FApplication 
+    {
     public:
-        Application(const std::string& name = "App", int width = 1280, int height = 720);
-        virtual ~Application();
+        FApplication(const std::string& Name = "App", int Width = 1280, int Height = 720);
+        virtual ~FApplication();
 
         void Run();
 
         virtual void OnStart() {}
-        virtual void OnUpdate(float dt) {}
+        virtual void OnUpdate(float DeltaTime) {}
         virtual void OnUIRender() {}
         virtual void OnShutdown() {}
         
         // Internal usage for thread
         void RenderLoop();
-        GLFWwindow* GetWindow() const { return m_Window; }
+        GLFWwindow* GetWindow() const { return WindowHandle; }
         
         // Sync data
-        int GetWidth() const { return m_Width; }
-        int GetHeight() const { return m_Height; }
-        void SetSize(int w, int h) { m_Width = w; m_Height = h; }
+        int GetWidth() const { return Width; }
+        int GetHeight() const { return Height; }
+        void SetSize(int NewWidth, int NewHeight) { Width = NewWidth; Height = NewHeight; }
 
     private:
-        static void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
-        static void WindowCloseCallback(GLFWwindow* window);
+        static void FramebufferSizeCallback(GLFWwindow* Window, int Width, int Height);
+        static void WindowCloseCallback(GLFWwindow* Window);
 
     private:
-        std::string m_Name;
-        std::atomic<int> m_Width;
-        std::atomic<int> m_Height;
-        GLFWwindow* m_Window;
+        std::string Name;
+        std::atomic<int> Width;
+        std::atomic<int> Height;
+        GLFWwindow* WindowHandle;
         
         // Threading
-        std::thread m_RenderThread;
-        std::atomic<bool> m_Running;
+        std::thread RenderThread;
+        std::atomic<bool> bIsRunning;
         
         // Timing
-        double m_PreviousTime = 0.0;
+        double PreviousTime = 0.0;
     };
 
 }
-
-// To be defined by the client
-Core::Application* CreateApplication();

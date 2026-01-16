@@ -7,43 +7,47 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
-extern "C" {
+extern "C" 
+{
     #include "rlgl.h"
 }
 
-namespace Core {
+namespace Core 
+{
 
-    Application::Application(const std::string& name, int width, int height)
-        : m_Name(name), m_Width(width), m_Height(height), m_Window(nullptr), m_Running(false)
+    FApplication::FApplication(const std::string& InName, int InWidth, int InHeight)
+        : Name(InName), Width(InWidth), Height(InHeight), WindowHandle(nullptr), bIsRunning(false)
     {
     }
 
-    Application::~Application()
+    FApplication::~FApplication()
     {
         // Join thread if still joinable
-        if (m_RenderThread.joinable())
-            m_RenderThread.join();
-    }
-
-    void Application::FramebufferSizeCallback(GLFWwindow* window, int width, int height)
-    {
-        Application* app = (Application*)glfwGetWindowUserPointer(window);
-        if (app)
+        if (RenderThread.joinable())
         {
-            app->SetSize(width, height);
+            RenderThread.join();
         }
     }
 
-    void Application::WindowCloseCallback(GLFWwindow* window)
+    void FApplication::FramebufferSizeCallback(GLFWwindow* Window, int InWidth, int InHeight)
     {
-        Application* app = (Application*)glfwGetWindowUserPointer(window);
-        if (app)
+        FApplication* App = (FApplication*)glfwGetWindowUserPointer(Window);
+        if (App)
         {
-            app->m_Running = false; // Signal thread to stop
+            App->SetSize(InWidth, InHeight);
         }
     }
 
-    void Application::Run()
+    void FApplication::WindowCloseCallback(GLFWwindow* Window)
+    {
+        FApplication* App = (FApplication*)glfwGetWindowUserPointer(Window);
+        if (App)
+        {
+            App->bIsRunning = false; // Signal thread to stop
+        }
+    }
+
+    void FApplication::Run()
     {
         if (!glfwInit())
         {
@@ -59,8 +63,8 @@ namespace Core {
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     #endif
 
-        m_Window = glfwCreateWindow(m_Width, m_Height, m_Name.c_str(), nullptr, nullptr);
-        if (!m_Window)
+        WindowHandle = glfwCreateWindow(Width, Height, Name.c_str(), nullptr, nullptr);
+        if (!WindowHandle)
         {
             std::cerr << "Failed to create GLFW window\n";
             glfwTerminate();
@@ -68,47 +72,51 @@ namespace Core {
         }
 
         // Setup Main Thread callbacks
-        glfwSetWindowUserPointer(m_Window, this);
-        glfwSetFramebufferSizeCallback(m_Window, FramebufferSizeCallback);
-        glfwSetWindowCloseCallback(m_Window, WindowCloseCallback);
+        glfwSetWindowUserPointer(WindowHandle, this);
+        glfwSetFramebufferSizeCallback(WindowHandle, FramebufferSizeCallback);
+        glfwSetWindowCloseCallback(WindowHandle, WindowCloseCallback);
 
         // --- Thread Handoff ---
         // We MUST release the context from the Main Thread so the Render Thread can claim it.
         glfwMakeContextCurrent(NULL);
         
         // Start Render Thread
-        m_Running = true;
-        m_RenderThread = std::thread(&Application::RenderLoop, this);
+        bIsRunning = true;
+        RenderThread = std::thread(&FApplication::RenderLoop, this);
 
         // --- Main Event Loop ---
         // This loop handles OS events (Input, Window Move/Resize).
         // It runs completely independently of the Render Thread.
         // Even if this loop blocks (e.g. while dragging window), the Render Thread continues.
-        while (m_Running)
+        while (bIsRunning)
         {
             // WaitEvents is more efficient for the main thread since we don't render here.
             // It sleeps until an input event arrives or a timeout.
             glfwWaitEvents();
             
-            // Explicitly check for close to break the loop if m_Running was set to false by callback
-            if (glfwWindowShouldClose(m_Window)) 
-                m_Running = false;
+            // Explicitly check for close to break the loop if bIsRunning was set to false by callback
+            if (glfwWindowShouldClose(WindowHandle)) 
+            {
+                bIsRunning = false;
+            }
         }
 
         // --- Cleanup ---
         // Wait for render thread to finish
-        if (m_RenderThread.joinable())
-            m_RenderThread.join();
+        if (RenderThread.joinable())
+        {
+            RenderThread.join();
+        }
 
-        glfwDestroyWindow(m_Window);
+        glfwDestroyWindow(WindowHandle);
         glfwTerminate();
     }
     
     // This runs on the SECONDARY THREAD
-    void Application::RenderLoop()
+    void FApplication::RenderLoop()
     {
         // CLAIM CONTEXT on this thread
-        glfwMakeContextCurrent(m_Window);
+        glfwMakeContextCurrent(WindowHandle);
         glfwSwapInterval(0); // Disable VSync for max performance (or 1 if preferred)
 
         // Initialize GLAD / Extensions
@@ -123,27 +131,27 @@ namespace Core {
 
         ImGui::StyleColorsDark();
 
-        ImGui_ImplGlfw_InitForOpenGL(m_Window, true);
+        ImGui_ImplGlfw_InitForOpenGL(WindowHandle, true);
         ImGui_ImplOpenGL3_Init("#version 330");
 
         // Initialize Raylib's RLGL
-        // Note: rlglInit uses internal bounds, we sync them via m_Width/m_Height
-        rlglInit(m_Width, m_Height);
+        // Note: rlglInit uses internal bounds, we sync them via Width/Height
+        rlglInit(Width, Height);
 
         // User Start
         OnStart();
 
-        m_PreviousTime = glfwGetTime();
+        PreviousTime = glfwGetTime();
 
-        while (m_Running)
+        while (bIsRunning)
         {
             double CurrentTime = glfwGetTime();
-            float DeltaSeconds = (float)(CurrentTime - m_PreviousTime);
-            m_PreviousTime = CurrentTime;
+            float DeltaSeconds = (float)(CurrentTime - PreviousTime);
+            PreviousTime = CurrentTime;
 
             // Update Viewport if resized (Atomic read)
-            int currentW = m_Width;
-            int currentH = m_Height;
+            int CurrentW = Width;
+            int CurrentH = Height;
 
             // User Update
             OnUpdate(DeltaSeconds);
@@ -159,7 +167,7 @@ namespace Core {
             // Render Frame
             ImGui::Render();
 
-            glViewport(0, 0, currentW, currentH);
+            glViewport(0, 0, CurrentW, CurrentH);
             glClearColor(0.12f, 0.12f, 0.12f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -173,7 +181,7 @@ namespace Core {
                 glfwMakeContextCurrent(BackupCurrentContext);
             }
 
-            glfwSwapBuffers(m_Window);
+            glfwSwapBuffers(WindowHandle);
         }
 
         // User Shutdown (on thread)
