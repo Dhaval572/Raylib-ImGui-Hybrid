@@ -1,6 +1,9 @@
 #pragma once
 
 #include <string>
+#include <thread>
+#include <atomic>
+#include <mutex>
 #include "imgui.h"
 
 // Forward declaration to avoid including internal headers in the public API if possible, 
@@ -25,18 +28,30 @@ namespace Core {
         virtual void OnUpdate(float dt) {}
         virtual void OnUIRender() {}
         virtual void OnShutdown() {}
+        
+        // Internal usage for thread
+        void RenderLoop();
+        GLFWwindow* GetWindow() const { return m_Window; }
+        
+        // Sync data
+        int GetWidth() const { return m_Width; }
+        int GetHeight() const { return m_Height; }
+        void SetSize(int w, int h) { m_Width = w; m_Height = h; }
 
     private:
-        void RenderFrame();
-        static void WindowRefreshCallback(GLFWwindow* window);
-        static void WindowPosCallback(GLFWwindow* window, int x, int y);
+        static void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
+        static void WindowCloseCallback(GLFWwindow* window);
 
     private:
         std::string m_Name;
-        int m_Width;
-        int m_Height;
+        std::atomic<int> m_Width;
+        std::atomic<int> m_Height;
         GLFWwindow* m_Window;
-
+        
+        // Threading
+        std::thread m_RenderThread;
+        std::atomic<bool> m_Running;
+        
         // Timing
         double m_PreviousTime = 0.0;
     };
