@@ -54,6 +54,7 @@ namespace Core
         // Threading
         std::thread RenderThread;
         std::atomic<bool> bIsRunning;
+        std::atomic<bool> bRenderLoopFinished;
         
         // Timing
         double PreviousTime = 0.0;

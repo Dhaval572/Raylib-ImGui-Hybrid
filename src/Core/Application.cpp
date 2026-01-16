@@ -16,7 +16,7 @@ namespace Core
 {
 
     FApplication::FApplication(const std::string& InName, int InWidth, int InHeight)
-        : Name(InName), Width(InWidth), Height(InHeight), WindowHandle(nullptr), bIsRunning(false)
+        : Name(InName), Width(InWidth), Height(InHeight), WindowHandle(nullptr), bIsRunning(false), bRenderLoopFinished(false)
     {
     }
 
@@ -76,6 +76,17 @@ namespace Core
         glfwSetFramebufferSizeCallback(WindowHandle, FramebufferSizeCallback);
         glfwSetWindowCloseCallback(WindowHandle, WindowCloseCallback);
 
+        // Initialize ImGui on Main Thread (Required for GLFW callbacks)
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& IO = ImGui::GetIO(); (void)IO;
+        IO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        IO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+        ImGui::StyleColorsDark();
+
+        ImGui_ImplGlfw_InitForOpenGL(WindowHandle, true);
+
         // --- Thread Handoff ---
         // We MUST release the context from the Main Thread so the Render Thread can claim it.
         glfwMakeContextCurrent(NULL);
@@ -103,10 +114,20 @@ namespace Core
 
         // --- Cleanup ---
         // Wait for render thread to finish
+        // We MUST keep pumping the event loop while waiting, otherwise 
+        // the RenderThread might deadlock on SwapBuffers waiting for the main thread.
+        while (!bRenderLoopFinished)
+        {
+            glfwWaitEventsTimeout(0.005); // Sleep 5ms but process events
+        }
+
         if (RenderThread.joinable())
         {
             RenderThread.join();
         }
+
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
 
         glfwDestroyWindow(WindowHandle);
         glfwTerminate();
@@ -122,16 +143,10 @@ namespace Core
         // Initialize GLAD / Extensions
         rlLoadExtensions((void*)glfwGetProcAddress);
 
-        // Initialize ImGui (Needs to happen on the thread with context)
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& IO = ImGui::GetIO(); (void)IO;
-        IO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        IO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-
-        ImGui::StyleColorsDark();
-
-        ImGui_ImplGlfw_InitForOpenGL(WindowHandle, true);
+        // ImGui Context created on Main Thread, just need IO here
+        ImGuiIO& IO = ImGui::GetIO();
+        
+        // Init OpenGL3 Backend (Needs GL Context)
         ImGui_ImplOpenGL3_Init("#version 330");
 
         // Initialize Raylib's RLGL
@@ -190,8 +205,9 @@ namespace Core
         // Cleanup (on thread)
         rlglClose();
         ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
+
+        // Signal completion
+        bRenderLoopFinished = true;
     }
 
 }
