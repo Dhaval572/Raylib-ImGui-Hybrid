@@ -1,0 +1,44 @@
+# Build Directories
+build/
+out/
+bin/
+cd 
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+*.cmake
+!CMakeLists.txt
+
+# Visual Studio / MSVC
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+*.obj
+*.pdb
+*.ilk
+*.tlog
+*.idb
+*.ipch
+*.pch
+*.lib
+*.exp
+
+# Executables and Libraries
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+
+# VS Code
+.vscode/
+
+# OS specific
+.DS_Store
+Thumbs.db
