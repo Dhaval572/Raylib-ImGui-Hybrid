@@ -10,7 +10,6 @@ CMakeFiles/
 CMakeScripts/
 cmake_install.cmake
 install_manifest.txt
-*.cmake
 !CMakeLists.txt
 
 # Visual Studio / MSVC
