@@ -11,7 +11,7 @@
 // so they don't have to include it manually in every file deriving from Application.
 extern "C" 
 {
-#include "raylib.h"
+    #include "raylib.h" 
 }
 
 struct GLFWwindow;

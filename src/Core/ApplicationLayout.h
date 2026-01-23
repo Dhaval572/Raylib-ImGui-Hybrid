@@ -38,6 +38,7 @@ inline void LoadApplicationDefaultIni()
 {
     ImGui::LoadIniSettingsFromMemory
     (
-        APPLICATION_DEFAULT_INI.data(), strlen(APPLICATION_DEFAULT_INI.data())
+        APPLICATION_DEFAULT_INI.data(), 
+        APPLICATION_DEFAULT_INI.size()
     );
 }

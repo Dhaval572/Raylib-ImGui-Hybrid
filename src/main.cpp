@@ -70,7 +70,7 @@ public:
 
     // Visual Settings
     Color BgColor = { 25, 25, 25, 255 };
-    Color CubeColor = { 230, 41, 55, 255 }; // Raylib Red
+    Color CubeColor = { 230, 41, 55, 255 }; 
     Color GridColor = { 60, 60, 60, 255 };
 
 
@@ -136,7 +136,15 @@ public:
 
             if (bDrawWireframe) 
             {
-                DrawModelWiresEx(CubeModel, CubePos, RotationAxis, CubeRotation, Scale, CubeColor);
+                DrawModelWiresEx
+                (
+                    CubeModel, 
+                    CubePos, 
+                    RotationAxis, 
+                    CubeRotation, 
+                    Scale, 
+                    CubeColor
+                );
             } 
             else 
             {
@@ -152,7 +160,12 @@ public:
     {
         // --- DockSpace ---
         ImGuiID DockSpaceId = ImGui::GetID("MyDockSpace");
-        ImGui::DockSpaceOverViewport(DockSpaceId, ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+        ImGui::DockSpaceOverViewport
+        (
+            DockSpaceId, 
+            ImGui::GetMainViewport(), 
+            ImGuiDockNodeFlags_PassthruCentralNode
+        );
 
         // --- Settings Panel ---
         ImGui::Begin("Settings");
@@ -182,10 +195,10 @@ public:
             float Col[4] = { C.r / 255.0f, C.g / 255.0f, C.b / 255.0f, C.a / 255.0f };
             if (ImGui::ColorEdit4(Label, Col)) 
             {
-                C.r = (unsigned char)(Col[0] * 255);
-                C.g = (unsigned char)(Col[1] * 255);
-                C.b = (unsigned char)(Col[2] * 255);
-                C.a = (unsigned char)(Col[3] * 255);
+                C.r = static_cast<unsigned char>(Col[0] * 255);
+                C.g = static_cast<unsigned char>(Col[1] * 255);
+                C.b = static_cast<unsigned char>(Col[2] * 255);
+                C.a = static_cast<unsigned char>(Col[3] * 255);
             }
         };
 
@@ -208,11 +221,16 @@ public:
         ImGui::Begin("Viewport");
         
         ImVec2 ViewportPanelSize = ImGui::GetContentRegionAvail();
-        int DesiredW = (int)ViewportPanelSize.x;
-        int DesiredH = (int)ViewportPanelSize.y;
+        int DesiredW = static_cast<int>(ViewportPanelSize.x);
+        int DesiredH = static_cast<int>(ViewportPanelSize.y);
 
         // Resize texture if viewport changed size (and is valid)
-        if (DesiredW > 0 && DesiredH > 0 && (DesiredW != ViewportWidth || DesiredH != ViewportHeight))
+        if 
+        (
+            DesiredW > 0 && 
+            DesiredH > 0 && 
+            (DesiredW != ViewportWidth || DesiredH != ViewportHeight)
+        )
         {
             UnloadRenderTexture(SceneTexture);
             ViewportWidth = DesiredW;
@@ -223,7 +241,17 @@ public:
         // Draw the texture
         // We flip the UVs (0,1) to (1,0) because Raylib renders upside down relative to ImGui/OpenGL coordinates
         ImTextureID TexID = (ImTextureID)(intptr_t)SceneTexture.texture.id;
-        ImGui::Image(TexID, ImVec2((float)ViewportWidth, (float)ViewportHeight), ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image
+        (
+            TexID, 
+            ImVec2
+            (
+                static_cast<float>(ViewportWidth), 
+                static_cast<float>(ViewportHeight)
+            ), 
+            ImVec2(0, 1), 
+            ImVec2(1, 0)
+        );
 
         ImGui::End();
         ImGui::PopStyleVar();

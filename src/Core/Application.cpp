@@ -1,5 +1,5 @@
 #include "Application.h"
-#include <iostream>
+#include <print>
 #include <glad/glad.h>
 #include "GLFW/glfw3.h"
 
@@ -19,20 +19,29 @@ namespace Core
 {
 
     FApplication::FApplication(std::string_view InName, int InWidth, int InHeight)
-        : Name(InName), Width(InWidth), Height(InHeight), WindowHandle(nullptr), bIsRunning(false), bRenderLoopFinished(false)
+        : Name(InName), 
+          Width(InWidth), 
+          Height(InHeight),
+          WindowHandle(nullptr), 
+          bIsRunning(false), 
+          bRenderLoopFinished(false)
     {
     }
 
     FApplication::~FApplication()
     {
-        // Join thread if still joinable
         if (RenderThread.joinable())
         {
             RenderThread.join();
         }
     }
 
-    void FApplication::FramebufferSizeCallback(GLFWwindow* Window, int InWidth, int InHeight)
+    void FApplication::FramebufferSizeCallback
+    (
+        GLFWwindow* Window, 
+        int InWidth, 
+        int InHeight
+    )
     {
         FApplication* App = (FApplication*)glfwGetWindowUserPointer(Window);
         if (App)
@@ -54,7 +63,7 @@ namespace Core
     {
         if (!glfwInit())
         {
-            std::cerr << "Failed to init GLFW\n";
+            std::println(stderr, "Failed to init GLFW");
             return;
         }
 
@@ -69,7 +78,7 @@ namespace Core
         WindowHandle = glfwCreateWindow(Width, Height, Name.c_str(), nullptr, nullptr);
         if (!WindowHandle)
         {
-            std::cerr << "Failed to create GLFW window\n";
+            std::println(stderr, "Failed to create GLFW window");
             glfwTerminate();
             return;
         }
@@ -90,7 +99,7 @@ namespace Core
 
         // --- Thread Handoff ---
         // We MUST release the context from the Main Thread so the Render Thread can claim it.
-        glfwMakeContextCurrent(NULL);
+        glfwMakeContextCurrent(nullptr);
         
         // Start Render Thread
         bIsRunning = true;
