@@ -35,7 +35,7 @@ target_include_directories(imgui PUBLIC
     external/raylib/src/external/glfw/include
 )
 
-add_executable(raylib_imgui_hybrid WIN32
+add_executable(raylib_imgui_hybrid
     src/main.cpp
     src/Core/Application.cpp
 )
