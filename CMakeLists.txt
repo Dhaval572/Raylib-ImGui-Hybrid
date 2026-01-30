@@ -35,10 +35,14 @@ target_include_directories(imgui PUBLIC
     external/raylib/src/external/glfw/include
 )
 
-add_executable(raylib_imgui_hybrid
-    src/main.cpp
-    src/Core/Application.cpp
+
+# Source Files
+file(GLOB_RECURSE SOURCES 
+    "src/*.cpp" 
+    "src/*.h"
 )
+
+add_executable(raylib_imgui_hybrid ${SOURCES})
 
 target_include_directories(raylib_imgui_hybrid PRIVATE
     src
@@ -56,6 +60,9 @@ target_link_libraries(raylib_imgui_hybrid PRIVATE
 )
 
 add_compile_definitions(NOMINMAX)
+target_compile_definitions(raylib_imgui_hybrid PRIVATE 
+    $<$<CONFIG:Debug>:CORE_DEBUG>
+)
 
 
 # -----------------------------

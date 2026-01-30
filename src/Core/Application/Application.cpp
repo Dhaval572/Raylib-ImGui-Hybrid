@@ -1,5 +1,7 @@
 #include "Application.h"
-#include <print>
+#include "Core/Logging/Log.h"
+#include "Core/Input/Input.h"
+
 #include <glad/glad.h>
 #include "GLFW/glfw3.h"
 
@@ -18,14 +20,19 @@ extern "C"
 namespace Core 
 {
 
-    FApplication::FApplication(std::string_view InName, int InWidth, int InHeight)
-        : Name(InName), 
-          Width(InWidth), 
-          Height(InHeight),
+    FApplication* FApplication::s_Instance = nullptr;
+
+    FApplication::FApplication(const FApplicationConfig& InConfig)
+        : Config(InConfig),
+          Name(InConfig.Name), 
+          Width(InConfig.Width), 
+          Height(InConfig.Height),
           WindowHandle(nullptr), 
           bIsRunning(false), 
           bRenderLoopFinished(false)
     {
+        CORE_ASSERT(!s_Instance, "Application already exists!");
+        s_Instance = this;
     }
 
     FApplication::~FApplication()
@@ -36,17 +43,54 @@ namespace Core
         }
     }
 
-    void FApplication::FramebufferSizeCallback
-    (
-        GLFWwindow* Window, 
-        int InWidth, 
-        int InHeight
-    )
+    void FApplication::PushLayer(FLayer* InLayer)
+    {
+        LayerStack.PushLayer(InLayer);
+    }
+
+    void FApplication::PushOverlay(FLayer* InOverlay)
+    {
+        LayerStack.PushOverlay(InOverlay);
+    }
+
+    void FApplication::OnEvent(FEvent& InEvent)
+    {
+        FEventDispatcher Dispatcher(InEvent);
+        Dispatcher.Dispatch<FWindowCloseEvent>(CORE_BIND_EVENT_FN(FApplication::OnWindowClose));
+        Dispatcher.Dispatch<FWindowResizeEvent>(CORE_BIND_EVENT_FN(FApplication::OnWindowResize));
+
+        for (auto It = LayerStack.rbegin(); It != LayerStack.rend(); ++It)
+        {
+            if (InEvent.bHandled) 
+                break;
+            (*It)->OnEvent(InEvent);
+        }
+    }
+
+    bool FApplication::OnWindowClose(FWindowCloseEvent& e)
+    {
+        bIsRunning = false;
+        return true;
+    }
+
+    bool FApplication::OnWindowResize(FWindowResizeEvent& e)
+    {
+        if (e.GetWidth() == 0 || e.GetHeight() == 0)
+        {
+            return false;
+        }
+
+        SetSize(e.GetWidth(), e.GetHeight());
+        return false;
+    }
+
+    void FApplication::FramebufferSizeCallback(GLFWwindow* Window, int Width, int Height)
     {
         FApplication* App = (FApplication*)glfwGetWindowUserPointer(Window);
         if (App)
         {
-            App->SetSize(InWidth, InHeight);
+            FWindowResizeEvent Event(Width, Height);
+            App->OnEvent(Event);
         }
     }
 
@@ -55,7 +99,8 @@ namespace Core
         FApplication* App = (FApplication*)glfwGetWindowUserPointer(Window);
         if (App)
         {
-            App->bIsRunning = false; // Signal thread to stop
+            FWindowCloseEvent Event;
+            App->OnEvent(Event);
         }
     }
 
@@ -63,7 +108,7 @@ namespace Core
     {
         if (!glfwInit())
         {
-            std::println(stderr, "Failed to init GLFW");
+            FLog::CoreError("Failed to init GLFW");
             return;
         }
 
@@ -78,7 +123,7 @@ namespace Core
         WindowHandle = glfwCreateWindow(Width, Height, Name.c_str(), nullptr, nullptr);
         if (!WindowHandle)
         {
-            std::println(stderr, "Failed to create GLFW window");
+            FLog::CoreError("Failed to create GLFW window");
             glfwTerminate();
             return;
         }
@@ -106,13 +151,8 @@ namespace Core
         RenderThread = std::thread(&FApplication::RenderLoop, this);
 
         // --- Main Event Loop ---
-        // This loop handles OS events (Input, Window Move/Resize).
-        // It runs completely independently of the Render Thread.
-        // Even if this loop blocks (e.g. while dragging window), the Render Thread continues.
         while (bIsRunning)
         {
-            // WaitEvents is more efficient for the main thread since we don't render here.
-            // It sleeps until an input event arrives or a timeout.
             glfwWaitEvents();
             
             // Explicitly check for close to break the loop if bIsRunning was set to false by callback
@@ -123,12 +163,9 @@ namespace Core
         }
 
         // --- Cleanup ---
-        // Wait for render thread to finish
-        // We MUST keep pumping the event loop while waiting, otherwise 
-        // the RenderThread might deadlock on SwapBuffers waiting for the main thread.
         while (!bRenderLoopFinished)
         {
-            glfwWaitEventsTimeout(0.005); // Sleep 5ms but process events
+            glfwWaitEventsTimeout(0.005);
         }
 
         if (RenderThread.joinable())
@@ -148,7 +185,7 @@ namespace Core
     {
         // CLAIM CONTEXT on this thread
         glfwMakeContextCurrent(WindowHandle);
-        glfwSwapInterval(1); // Disable VSync for max performance (or 1 if preferred)
+        glfwSwapInterval(1); // Disable VSync for max performance (or 1 if preferred at 60)
 
         // Initialize GLAD / Extensions
         rlLoadExtensions((void*)glfwGetProcAddress);
@@ -160,7 +197,6 @@ namespace Core
         ImGui_ImplOpenGL3_Init("#version 330");
 
         // Initialize Raylib's RLGL
-        // Note: rlglInit uses internal bounds, we sync them via Width/Height
         rlglInit(Width, Height);
 
         // User Start
@@ -174,11 +210,15 @@ namespace Core
             float DeltaSeconds = static_cast<float>(CurrentTime - PreviousTime);
             PreviousTime = CurrentTime;
 
-            // Update Viewport if resized (Atomic read)
+            // Updated Local Width/Height
             int CurrentW = Width;
             int CurrentH = Height;
 
-            // User Update
+            // Update Layers
+            for (FLayer* Layer : LayerStack)
+                Layer->OnUpdate(DeltaSeconds);
+
+            // Legacy Update (Keep for now)
             OnUpdate(DeltaSeconds);
 
             // ImGui Frame
@@ -186,7 +226,11 @@ namespace Core
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            // User UI Render
+            // Render Layers UI
+            for (FLayer* Layer : LayerStack)
+                Layer->OnUIRender();
+
+            // Legacy UI Render
             OnUIRender();
 
             // Render Frame

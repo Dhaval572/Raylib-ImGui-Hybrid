@@ -1,13 +1,14 @@
 #pragma once
 #include "Application.h"
 
+#include <memory> 
+
 extern Core::FApplication* CreateApplication();
 
 int main(int argc, char** argv)
 {
-    Core::FApplication* App = CreateApplication();
+    auto App = std::unique_ptr<Core::FApplication>(CreateApplication());
     App->Run();
-    delete App;
     return 0;
 }
 

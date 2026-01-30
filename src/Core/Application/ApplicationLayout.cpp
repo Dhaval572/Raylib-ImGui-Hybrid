@@ -1,5 +1,8 @@
-#include<cstring>
-#include<imgui.h>
+#include "ApplicationLayout.h"
+#include <string_view>
+#include <imgui.h>
+
+namespace Core {
 
 // Default docking layout for the editor, loaded on startup
 static constexpr std::string_view APPLICATION_DEFAULT_INI = 
@@ -34,11 +37,12 @@ Collapsed=0
 DockSpace ID=0xE098E157 Window=0x1BBC0F80 Pos=0,0 Size=1600,900 CentralNode=1 HiddenTabBar=1 Selected=0xC450F867
 )";
 
-inline void LoadApplicationDefaultIni()
+void LoadApplicationDefaultIni()
 {
     ImGui::LoadIniSettingsFromMemory
     (
         APPLICATION_DEFAULT_INI.data(), 
         APPLICATION_DEFAULT_INI.size()
     );
+}
 }

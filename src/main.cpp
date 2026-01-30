@@ -1,4 +1,4 @@
-#include "Core/Application.h"
+#include "Core/Application/Application.h"
 
 
 // The user application logic
@@ -6,7 +6,7 @@ class FSandboxApp : public Core::FApplication
 {
 public:
     FSandboxApp() 
-        : Core::FApplication("Raylib + ImGui Hybrid Engine", 1600, 900)
+        : Core::FApplication(Core::FApplicationConfig{ .Name = "Raylib + ImGui Hybrid Engine", .Width = 1600, .Height = 900 })
     {
     }
 
@@ -203,4 +203,4 @@ Core::FApplication* CreateApplication()
     return new FSandboxApp();
 }
 
-#include "Core/EntryPoint.h"
+#include "Core/Application/EntryPoint.h"

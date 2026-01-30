@@ -1,11 +1,8 @@
-﻿#pragma once
-#include <string>
+#include "ApplicationTheme.h"
 #include <imgui.h>
 
-inline void SetApplicationTheme
-(
-    std::string_view path = "Roboto-Regular.ttf"
-)
+namespace Core {
+void SetApplicationTheme(std::string_view path)
 {
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -158,4 +155,5 @@ inline void SetApplicationTheme
     style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.15f, 0.05f, 0.05f, 0.50f); // lighter red borders
     style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f); // transparent
     style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.05f, 0.02f, 0.02f, 0.15f); // subtle dark red alt row
+}
 }
