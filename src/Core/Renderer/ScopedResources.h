@@ -5,97 +5,149 @@
 
 namespace Core {
 
-    class ScopedTexture
+    class FScopedTexture
     {
     public:
-        ScopedTexture() = default;
-        ScopedTexture(const char* path)
+        FScopedTexture() = default;
+        FScopedTexture(const char* Path)
         {
-            m_Texture = LoadTexture(path);
+            Texture = LoadTexture(Path);
         }
 
-        ~ScopedTexture()
+        ~FScopedTexture()
         {
-            if (m_Texture.id != 0)
-                UnloadTexture(m_Texture);
+            if (Texture.id != 0)
+                UnloadTexture(Texture);
         }
 
         // Move Only
-        ScopedTexture(const ScopedTexture&) = delete;
-        ScopedTexture& operator=(const ScopedTexture&) = delete;
+        FScopedTexture(const FScopedTexture&) = delete;
+        FScopedTexture& operator=(const FScopedTexture&) = delete;
 
-        ScopedTexture(ScopedTexture&& other) noexcept
+        FScopedTexture(FScopedTexture&& Other) noexcept
         {
-            m_Texture = other.m_Texture;
-            other.m_Texture = { 0 };
+            Texture = Other.Texture;
+            Other.Texture = { 0 };
         }
 
-        ScopedTexture& operator=(ScopedTexture&& other) noexcept
+        FScopedTexture& operator=(FScopedTexture&& Other) noexcept
         {
-            if (this != &other)
+            if (this != &Other)
             {
-                if (m_Texture.id != 0) UnloadTexture(m_Texture);
-                m_Texture = other.m_Texture;
-                other.m_Texture = { 0 };
+                if (Texture.id != 0) UnloadTexture(Texture);
+                Texture = Other.Texture;
+                Other.Texture = { 0 };
             }
             return *this;
         }
 
-        operator Texture2D() const { return m_Texture; }
+        operator Texture2D() const { return Texture; }
+        [[nodiscard]] bool IsValid() const { return Texture.id != 0; }
 
     private:
-        Texture2D m_Texture = { 0 };
+        Texture2D Texture = { 0 };
     };
 
-    class ScopedRenderTexture
+    class FScopedRenderTexture
     {
     public:
-        ScopedRenderTexture() = default;
-        ScopedRenderTexture(int width, int height)
+        FScopedRenderTexture() = default;
+        FScopedRenderTexture(int Width, int Height)
         {
-            m_Texture = LoadRenderTexture(width, height);
+            Texture = LoadRenderTexture(Width, Height);
         }
 
-        ~ScopedRenderTexture()
+        ~FScopedRenderTexture()
         {
-            if (m_Texture.id != 0)
-                UnloadRenderTexture(m_Texture);
+            if (Texture.id != 0)
+                UnloadRenderTexture(Texture);
         }
 
-        void Load(int width, int height)
+        void Load(int Width, int Height)
         {
-            if (m_Texture.id != 0) UnloadRenderTexture(m_Texture);
-            m_Texture = LoadRenderTexture(width, height);
+            if (Texture.id != 0) UnloadRenderTexture(Texture);
+            Texture = LoadRenderTexture(Width, Height);
         }
 
         // Move Only
-        ScopedRenderTexture(const ScopedRenderTexture&) = delete;
-        ScopedRenderTexture& operator=(const ScopedRenderTexture&) = delete;
+        FScopedRenderTexture(const FScopedRenderTexture&) = delete;
+        FScopedRenderTexture& operator=(const FScopedRenderTexture&) = delete;
 
-        ScopedRenderTexture(ScopedRenderTexture&& other) noexcept
+        FScopedRenderTexture(FScopedRenderTexture&& Other) noexcept
         {
-            m_Texture = other.m_Texture;
-            other.m_Texture = { 0 };
+            Texture = Other.Texture;
+            Other.Texture = { 0 };
         }
 
-        ScopedRenderTexture& operator=(ScopedRenderTexture&& other) noexcept
+        FScopedRenderTexture& operator=(FScopedRenderTexture&& Other) noexcept
         {
-            if (this != &other)
+            if (this != &Other)
             {
-                if (m_Texture.id != 0) UnloadRenderTexture(m_Texture);
-                m_Texture = other.m_Texture;
-                other.m_Texture = { 0 };
+                if (Texture.id != 0) UnloadRenderTexture(Texture);
+                Texture = Other.Texture;
+                Other.Texture = { 0 };
             }
             return *this;
         }
 
-        operator RenderTexture2D() const { return m_Texture; }
+        operator RenderTexture2D() const { return Texture; }
 
         // Access members like a pointer if needed, or helper
-        Texture2D GetTexture() const { return m_Texture.texture; }
+        [[nodiscard]] Texture2D GetTexture() const { return Texture.texture; }
+        [[nodiscard]] bool IsValid() const { return Texture.id != 0; }
 
     private:
-        RenderTexture2D m_Texture = { 0 };
+        RenderTexture2D Texture = { 0 };
+    };
+
+    class FScopedModel
+    {
+    public:
+        FScopedModel() = default;
+        explicit FScopedModel(const Mesh& InMesh)
+        {
+            ModelResource = LoadModelFromMesh(InMesh);
+        }
+
+        ~FScopedModel()
+        {
+            // Check if model has valid meshes before unloading to avoid raylib warnings/errors if empty
+            if (ModelResource.meshCount > 0)
+                UnloadModel(ModelResource);
+        }
+
+        void Set(const Model& InModel)
+        {
+             if (ModelResource.meshCount > 0) UnloadModel(ModelResource);
+             ModelResource = InModel;
+        }
+
+        // Move Only
+        FScopedModel(const FScopedModel&) = delete;
+        FScopedModel& operator=(const FScopedModel&) = delete;
+
+        FScopedModel(FScopedModel&& Other) noexcept
+        {
+            ModelResource = Other.ModelResource;
+            Other.ModelResource = { 0 };
+        }
+
+        FScopedModel& operator=(FScopedModel&& Other) noexcept
+        {
+             if (this != &Other)
+             {
+                 if (ModelResource.meshCount > 0) UnloadModel(ModelResource);
+                 ModelResource = Other.ModelResource;
+                 Other.ModelResource = { 0 };
+             }
+             return *this;
+        }
+
+        operator Model() const { return ModelResource; }
+        [[nodiscard]] bool IsValid() const { return ModelResource.meshCount > 0; }
+
+    private:
+        Model ModelResource = { 0 };
     };
 
 }

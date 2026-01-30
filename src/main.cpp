@@ -1,5 +1,5 @@
 #include "Core/Application/Application.h"
-
+#include "Core/Renderer/ScopedResources.h"
 
 // The user application logic
 class FSandboxApp : public Core::FApplication 
@@ -11,13 +11,18 @@ public:
     }
 
     // Scene Resources
-    RenderTexture2D SceneTexture = { 0 };
-    int ViewportWidth = 0;
-    int ViewportHeight = 0;
-    Model CubeModel = { 0 };
+    Core::FScopedRenderTexture SceneTexture;
+    Core::FScopedModel CubeModel;
     
     // Scene State
     Camera3D Camera = { 0 };
+    int ViewportWidth = 0;
+    int ViewportHeight = 0;
+    
+    // Sync UI to Render
+    int DesiredViewportWidth = 1280;
+    int DesiredViewportHeight = 720;
+
     float CubeRotation = 0.0f;
     float RotationSpeed = 1.0f;
     bool bDrawWireframe = false;
@@ -28,8 +33,6 @@ public:
     Color CubeColor = { 230, 41, 55, 255 }; 
     Color GridColor = { 60, 60, 60, 255 };
 
-
-
     void OnStart() override 
     {
         // Initialize Camera
@@ -39,19 +42,31 @@ public:
         Camera.fovy = 45.0f;
         Camera.projection = CAMERA_PERSPECTIVE;
 
-        // Initialize Render Texture (start small, will resize in Update)
-        ViewportWidth = 1280;
-        ViewportHeight = 720;
-        SceneTexture = LoadRenderTexture(ViewportWidth, ViewportHeight);
+        // Initialize Render Texture
+        ViewportWidth = DesiredViewportWidth;
+        ViewportHeight = DesiredViewportHeight;
+        SceneTexture.Load(ViewportWidth, ViewportHeight);
 
         // Load a Unit Cube Model
+        // Note: GenMeshCube creates a mesh on heap, LoadModelFromMesh takes ownership? 
+        // Raylib docs: "The loaded model owns the mesh" -> UnloadModel unloads mesh.
         Mesh CubeMesh = GenMeshCube(1.5f, 1.5f, 1.5f);
-        CubeModel = LoadModelFromMesh(CubeMesh);
+        CubeModel.Set(LoadModelFromMesh(CubeMesh));
     }
 
     void OnUpdate(float DeltaTime) override 
     {
-        // Update Logic
+        // --- Resource Management (Pre-Render) ---
+        // Resize texture if requested by UI
+        if (DesiredViewportWidth > 0 && DesiredViewportHeight > 0 && 
+           (DesiredViewportWidth != ViewportWidth || DesiredViewportHeight != ViewportHeight))
+        {
+            ViewportWidth = DesiredViewportWidth;
+            ViewportHeight = DesiredViewportHeight;
+            SceneTexture.Load(ViewportWidth, ViewportHeight);
+        }
+
+        // --- Update Logic ---
         if (bAutoRotate) 
         {
             CubeRotation += (45.0f * DeltaTime * RotationSpeed);
@@ -59,44 +74,47 @@ public:
         }
 
         // --- Render Scene to Texture ---
-        BeginTextureMode(SceneTexture);
-        ClearBackground(BgColor);
+        if (SceneTexture.IsValid())
+        {
+            BeginTextureMode(SceneTexture);
+            ClearBackground(BgColor);
 
-        BeginMode3D(Camera);
+            BeginMode3D(Camera);
 
-            // Draw Grid
-            DrawGrid(10, 1.0f);
-            
-            // Draw Axes
-            DrawLine3D({0,0,0}, {1,0,0}, RED);
-            DrawLine3D({0,0,0}, {0,1,0}, GREEN);
-            DrawLine3D({0,0,0}, {0,0,1}, BLUE);
+                // Draw Grid
+                DrawGrid(10, 1.0f);
+                
+                // Draw Axes
+                DrawLine3D({0,0,0}, {1,0,0}, RED);
+                DrawLine3D({0,0,0}, {0,1,0}, GREEN);
+                DrawLine3D({0,0,0}, {0,0,1}, BLUE);
 
-            // Draw Rotating Cube
-            Vector3 CubePos = { 0.0f, 0.5f, 0.0f };
-            Vector3 RotationAxis = { 0.0f, 1.0f, 0.0f };
-            Vector3 Scale = { 1.0f, 1.0f, 1.0f };
+                // Draw Rotating Cube
+                Vector3 CubePos = { 0.0f, 0.5f, 0.0f };
+                Vector3 RotationAxis = { 0.0f, 1.0f, 0.0f };
+                Vector3 Scale = { 1.0f, 1.0f, 1.0f };
 
-            if (bDrawWireframe) 
-            {
-                DrawModelWiresEx
-                (
-                    CubeModel, 
-                    CubePos, 
-                    RotationAxis, 
-                    CubeRotation, 
-                    Scale, 
-                    CubeColor
-                );
-            } 
-            else 
-            {
-                DrawModelEx(CubeModel, CubePos, RotationAxis, CubeRotation, Scale, CubeColor);
-                DrawModelWiresEx(CubeModel, CubePos, RotationAxis, CubeRotation, Scale, BLACK);
-            }
+                if (bDrawWireframe) 
+                {
+                    DrawModelWiresEx
+                    (
+                        CubeModel, 
+                        CubePos, 
+                        RotationAxis, 
+                        CubeRotation, 
+                        Scale, 
+                        CubeColor
+                    );
+                } 
+                else 
+                {
+                    DrawModelEx(CubeModel, CubePos, RotationAxis, CubeRotation, Scale, CubeColor);
+                    DrawModelWiresEx(CubeModel, CubePos, RotationAxis, CubeRotation, Scale, BLACK);
+                }
 
-        EndMode3D();
-        EndTextureMode();
+            EndMode3D();
+            EndTextureMode();
+        }
     }
 
     void OnUIRender() override 
@@ -132,7 +150,6 @@ public:
         ImGui::Separator();
         ImGui::TextDisabled("Colors");
         
-        // Helper to convert Raylib Color to ImVec4 and back
         auto EditColor = [](const char* Label, Color& C) 
         {
             float Col[4] = { C.r / 255.0f, C.g / 255.0f, C.b / 255.0f, C.a / 255.0f };
@@ -154,38 +171,28 @@ public:
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("Viewport");
         
+        // Read available size
         ImVec2 ViewportPanelSize = ImGui::GetContentRegionAvail();
-        int DesiredW = static_cast<int>(ViewportPanelSize.x);
-        int DesiredH = static_cast<int>(ViewportPanelSize.y);
-
-        // Resize texture if viewport changed size (and is valid)
-        if 
-        (
-            DesiredW > 0 && 
-            DesiredH > 0 && 
-            (DesiredW != ViewportWidth || DesiredH != ViewportHeight)
-        )
-        {
-            UnloadRenderTexture(SceneTexture);
-            ViewportWidth = DesiredW;
-            ViewportHeight = DesiredH;
-            SceneTexture = LoadRenderTexture(ViewportWidth, ViewportHeight);
-        }
+        DesiredViewportWidth = static_cast<int>(ViewportPanelSize.x);
+        DesiredViewportHeight = static_cast<int>(ViewportPanelSize.y);
 
         // Draw the texture
-        // We flip the UVs (0,1) to (1,0) because Raylib renders upside down relative to ImGui/OpenGL coordinates
-        ImTextureID TexID = (ImTextureID)(intptr_t)SceneTexture.texture.id;
-        ImGui::Image
-        (
-            TexID, 
-            ImVec2
+        if (SceneTexture.IsValid())
+        {
+            // We flip the UVs (0,1) to (1,0) because Raylib renders upside down relative to ImGui/OpenGL coordinates
+            ImTextureID TexID = (ImTextureID)(intptr_t)SceneTexture.GetTexture().id;
+            ImGui::Image
             (
-                static_cast<float>(ViewportWidth), 
-                static_cast<float>(ViewportHeight)
-            ), 
-            ImVec2(0, 1), 
-            ImVec2(1, 0)
-        );
+                TexID, 
+                ImVec2
+                (
+                    static_cast<float>(ViewportWidth), 
+                    static_cast<float>(ViewportHeight)
+                ), 
+                ImVec2(0, 1), 
+                ImVec2(1, 0)
+            );
+        }
 
         ImGui::End();
         ImGui::PopStyleVar();
@@ -193,8 +200,7 @@ public:
 
     void OnShutdown() override 
     {
-        UnloadRenderTexture(SceneTexture);
-        UnloadModel(CubeModel);
+        // Manual unloading removed! RAII usage handles this.
     }
 };
 
