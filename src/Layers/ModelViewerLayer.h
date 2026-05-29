@@ -7,8 +7,8 @@
 #include "raylib.h"
 #include <mutex>
 
-namespace Core {
-
+namespace Core
+{
     class ModelViewerLayer : public FLayer
     {
     public:
@@ -30,9 +30,9 @@ namespace Core {
         // Scene Resources
         FScopedRenderTexture ViewportTexture;
         FScopedModel LoadedModel;
-        
+
         // Scene State
-        Camera3D EditorCamera = { 0 };
+        Camera3D EditorCamera = {};
         Vector3 CameraTarget = { 0.0f, 0.0f, 0.0f };
         Vector2 LastMousePos = { 0.0f, 0.0f };
         float CameraDistance = 5.0f;

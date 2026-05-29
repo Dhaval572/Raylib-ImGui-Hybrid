@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Core/Base/Core.h"
+#include "Core/Base/Core.h" // IWYU pragma: keep
 #include "Core/Events/Event.h"
 #include <string>
 
-namespace Core {
-
+namespace Core
+{
     class FLayer
     {
     public:
@@ -14,13 +14,12 @@ namespace Core {
 
         virtual void OnAttach() {}
         virtual void OnDetach() {}
-        virtual void OnUpdate(float DeltaTime) {}
+        virtual void OnUpdate(float) {}
         virtual void OnUIRender() {}
-        virtual void OnEvent(FEvent& InEvent) {}
+        virtual void OnEvent(FEvent&) {}
 
         [[nodiscard]] const std::string& GetName() const { return DebugName; }
     protected:
         std::string DebugName;
     };
-
 }

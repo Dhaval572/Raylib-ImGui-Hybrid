@@ -1,7 +1,8 @@
 #include "Application.h"
+#include "Core/Application/ApplicationConfig.h"
 #include "Core/Logging/Log.h"
 #include "Core/Logging/Log.h"
-#include "Core/Input/Input.h"
+#include "Core/Input/Input.h" // IWYU pragma: keep
 #include "Core/Events/MouseEvent.h"
 
 #include <glad/glad.h>
@@ -13,24 +14,24 @@
 
 #include "ApplicationLayout.h"
 #include "ApplicationTheme.h"
+#include "raymath.h" // IWYU pragma: keep
 
-extern "C" 
+extern "C"
 {
     #include "rlgl.h"
 }
 
-namespace Core 
+namespace Core
 {
-
     FApplication* FApplication::s_Instance = nullptr;
 
     FApplication::FApplication(const FApplicationConfig& InConfig)
-        : Config(InConfig),
-          Name(InConfig.Name), 
-          Width(InConfig.Width), 
+        : Name(InConfig.Name),
+          Config(InConfig),
+          Width(InConfig.Width),
           Height(InConfig.Height),
-          WindowHandle(nullptr), 
-          bIsRunning(false), 
+          WindowHandle(nullptr),
+          bIsRunning(false),
           bRenderLoopFinished(false)
     {
         CORE_ASSERT(!s_Instance, "Application already exists!");
@@ -63,13 +64,13 @@ namespace Core
 
         for (auto It = LayerStack.rbegin(); It != LayerStack.rend(); ++It)
         {
-            if (InEvent.bHandled) 
+            if (InEvent.bHandled)
                 break;
             (*It)->OnEvent(InEvent);
         }
     }
 
-    bool FApplication::OnWindowClose(FWindowCloseEvent& e)
+    bool FApplication::OnWindowClose(FWindowCloseEvent&)
     {
         bIsRunning = false;
         return true;
@@ -88,7 +89,7 @@ namespace Core
 
     void FApplication::FramebufferSizeCallback(GLFWwindow* Window, int Width, int Height)
     {
-        FApplication* App = (FApplication*)glfwGetWindowUserPointer(Window);
+        FApplication* App = static_cast<FApplication*>(glfwGetWindowUserPointer(Window));
         if (App)
         {
             FWindowResizeEvent Event(Width, Height);
@@ -98,7 +99,7 @@ namespace Core
 
     void FApplication::WindowCloseCallback(GLFWwindow* Window)
     {
-        FApplication* App = (FApplication*)glfwGetWindowUserPointer(Window);
+        FApplication* App = static_cast<FApplication*>(glfwGetWindowUserPointer(Window));
         if (App)
         {
             FWindowCloseEvent Event;
@@ -108,7 +109,7 @@ namespace Core
 
     void FApplication::WindowDropCallback(GLFWwindow* Window, int Count, const char** Paths)
     {
-        FApplication* App = (FApplication*)glfwGetWindowUserPointer(Window);
+        FApplication* App = static_cast<FApplication*>(glfwGetWindowUserPointer(Window));
         if (App)
         {
             std::vector<std::string> PathList;
@@ -125,10 +126,10 @@ namespace Core
 
     void FApplication::ScrollCallback(GLFWwindow* Window, double XOffset, double YOffset)
     {
-        FApplication* App = (FApplication*)glfwGetWindowUserPointer(Window);
+        FApplication* App = static_cast<FApplication*>(glfwGetWindowUserPointer(Window));
         if (App)
         {
-            FMouseScrolledEvent Event((float)XOffset, (float)YOffset);
+            FMouseScrolledEvent Event(static_cast<float>(XOffset), static_cast<float>(YOffset));
             App->OnEvent(Event);
         }
     }
@@ -167,7 +168,7 @@ namespace Core
         // Initialize ImGui on Main Thread (Required for GLFW callbacks)
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        
+
         SetApplicationTheme();
         LoadApplicationDefaultIni();
 
@@ -176,7 +177,7 @@ namespace Core
         // --- Thread Handoff ---
         // We MUST release the context from the Main Thread so the Render Thread can claim it.
         glfwMakeContextCurrent(nullptr);
-        
+
         // Start Render Thread
         bIsRunning = true;
         RenderThread = std::thread(&FApplication::RenderLoop, this);
@@ -185,9 +186,9 @@ namespace Core
         while (bIsRunning)
         {
             glfwWaitEvents();
-            
+
             // Explicitly check for close to break the loop if bIsRunning was set to false by callback
-            if (glfwWindowShouldClose(WindowHandle)) 
+            if (glfwWindowShouldClose(WindowHandle))
             {
                 bIsRunning = false;
             }
@@ -210,7 +211,7 @@ namespace Core
         glfwDestroyWindow(WindowHandle);
         glfwTerminate();
     }
-    
+
     // This runs on the SECONDARY THREAD
     void FApplication::RenderLoop()
     {
@@ -223,7 +224,7 @@ namespace Core
 
         // ImGui Context created on Main Thread, just need IO here
         ImGuiIO& IO = ImGui::GetIO();
-        
+
         // Init OpenGL3 Backend (Needs GL Context)
         ImGui_ImplOpenGL3_Init("#version 330");
 
@@ -250,7 +251,7 @@ namespace Core
                 Layer->OnUpdate(DeltaSeconds);
 
             // Legacy Update (Keep for now)
-            OnUpdate(DeltaSeconds);
+            // OnUpdate(DeltaSeconds);
 
             // ImGui Frame
             ImGui_ImplOpenGL3_NewFrame();
@@ -282,7 +283,7 @@ namespace Core
             }
 
             glfwSwapBuffers(WindowHandle);
-        }
+        } 
 
         // User Shutdown (on thread)
         OnShutdown();
@@ -293,5 +294,4 @@ namespace Core
 
         bRenderLoopFinished = true;
     }
-
 }

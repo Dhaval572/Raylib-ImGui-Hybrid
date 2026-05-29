@@ -45,6 +45,7 @@ set(SOURCES
     src/Core/Application/ApplicationLayout.h
     src/Core/Application/ApplicationTheme.cpp
     src/Core/Application/ApplicationTheme.h
+    src/Core/Application/EntryPoint.cpp
     src/Core/Application/EntryPoint.h
     src/Core/Base/Core.h
     src/Core/Events/ApplicationEvent.h

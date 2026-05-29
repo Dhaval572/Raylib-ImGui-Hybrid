@@ -3,7 +3,6 @@
 
 namespace Core 
 {
-
     void SetApplicationTheme(std::string_view Path)
     {
         ImGuiIO& IO = ImGui::GetIO();

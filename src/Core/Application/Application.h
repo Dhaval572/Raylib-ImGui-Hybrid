@@ -3,28 +3,27 @@
 #include <string>
 #include <thread>
 #include <atomic>
-#include <mutex>
-#include "imgui.h"
+#include <mutex> // IWYU pragma: keep
+#include "imgui.h" // IWYU pragma: keep
 
 #include "Core/Events/Event.h"
 #include "Core/Events/ApplicationEvent.h"
 #include "Core/Layers/LayerStack.h"
 #include "Core/Application/ApplicationConfig.h"
 
-// Forward declaration to avoid including internal headers in the public API if possible, 
-// strictly speaking user asked to use raylib methods, so including raylib.h here is good 
+// Forward declaration to avoid including internal headers in the public API if possible,
+// strictly speaking user asked to use raylib methods, so including raylib.h here is good
 // so they don't have to include it manually in every file deriving from Application.
-extern "C" 
+extern "C"
 {
-    #include "raylib.h" 
+    #include "raylib.h" // IWYU pragma: keep
 }
 
 struct GLFWwindow;
 
-namespace Core 
+namespace Core
 {
-
-    class FApplication 
+    class FApplication
     {
     public:
         FApplication(const FApplicationConfig& InConfig = FApplicationConfig());
@@ -39,14 +38,14 @@ namespace Core
 
         // Legacy Virtuals
         virtual void OnStart() {}
-        virtual void OnUpdate(float DeltaTime) {}
+        virtual void OnUpdate([[maybe_unused]] float DeltaTime) {}
         virtual void OnUIRender() {}
         virtual void OnShutdown() {}
-        
+
         // Internal usage for thread
         void RenderLoop();
         [[nodiscard]] GLFWwindow* GetWindow() const { return WindowHandle; }
-        
+
         // Sync data
         [[nodiscard]] int GetWidth() const { return Width; }
         [[nodiscard]] int GetHeight() const { return Height; }
@@ -58,27 +57,27 @@ namespace Core
         static void WindowDropCallback(GLFWwindow* Window, int Count, const char** Paths);
         static void ScrollCallback(GLFWwindow* Window, double XOffset, double YOffset);
 
-        bool OnWindowClose(FWindowCloseEvent& e);
+        bool OnWindowClose([[maybe_unused]] FWindowCloseEvent& e);
         bool OnWindowResize(FWindowResizeEvent& e);
 
     private:
         std::string Name;
         FApplicationConfig Config;
-        
+
         std::atomic<int> Width;
         std::atomic<int> Height;
         GLFWwindow* WindowHandle;
-        
+
         FLayerStack LayerStack;
 
         // Threading
         std::thread RenderThread;
         std::atomic<bool> bIsRunning;
         std::atomic<bool> bRenderLoopFinished;
-        
+
         // Timing
         double PreviousTime = 0.0;
-    
+
     private:
         static FApplication* s_Instance;
     };

@@ -1,6 +1,7 @@
 #pragma once
 
 
-namespace Core {
-void LoadApplicationDefaultIni();
+namespace Core
+{
+    void LoadApplicationDefaultIni();
 }

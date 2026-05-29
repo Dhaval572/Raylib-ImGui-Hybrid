@@ -1,11 +1,20 @@
 #include "ApplicationLayout.h"
 #include <string_view>
-#include <imgui.h>
+#include <imgui.h>      
 
-namespace Core {
+// ============================================================================
+// WARNING:
+// 
+// This ImGui layout is loaded directly from this raw string.
+// Do NOT modify, reformat, reindent, or adjust whitespace.
+// Formatting and line structure are significant and may break layout loading.
+// ============================================================================
 
+namespace Core
+{
 // Default docking layout for the editor, loaded on startup
-static constexpr std::string_view APPLICATION_DEFAULT_INI = 
+// clang-format off
+static constexpr std::string_view APPLICATION_DEFAULT_INI =
 R"(
 [Window][Debug##Default]
 Pos=1193,260
@@ -46,12 +55,12 @@ DockSpace   ID=0x06D1653D Window=0x1BBC0F80 Pos=0,0 Size=1600,900 Split=X
 DockSpace   ID=0xE098E157 Pos=0,0 Size=1600,900 CentralNode=1 HiddenTabBar=1 Selected=0xC450F867
 )";
 
-void LoadApplicationDefaultIni()
-{
-    ImGui::LoadIniSettingsFromMemory
-    (
-        APPLICATION_DEFAULT_INI.data(), 
-        APPLICATION_DEFAULT_INI.size()
-    );
-}
+    void LoadApplicationDefaultIni()
+    {
+        ImGui::LoadIniSettingsFromMemory
+        (
+            APPLICATION_DEFAULT_INI.data(),
+            APPLICATION_DEFAULT_INI.size()
+        );
+    }
 }

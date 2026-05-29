@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Base/Core.h"
+#include "Core/Base/Core.h" // IWYU pragma: keep
 #include "Layer.h"
 
 #include <vector>
