@@ -144,6 +144,8 @@ namespace Core
              return *this;
         }
 
+        Model& Get() noexcept { return ModelResource; }
+        const Model& Get() const noexcept { return ModelResource; }
         operator Model() const { return ModelResource; }
         [[nodiscard]] bool IsValid() const { return ModelResource.meshCount > 0; }
 

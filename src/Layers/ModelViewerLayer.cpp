@@ -1,7 +1,6 @@
 #include "ModelViewerLayer.h"
 #include "Core/Renderer/ModelLoader.h"
 #include "Core/Input/Input.h"
-#include "Core/Input/Input.h"
 #include "Core/Logging/Log.h"
 #include "Core/Events/MouseEvent.h"
 #include <imgui.h>
@@ -304,7 +303,7 @@ namespace Core
 
                 if (LoadedModel.IsValid())
                 {
-                    Model& M = (Model&)LoadedModel;
+                    Model& M = LoadedModel.Get();
 
                     // Apply Transform
                     // Reconstruct transform matrix (Scale -> Rotate -> Translate)
@@ -403,7 +402,7 @@ namespace Core
         ImGui::TextDisabled("Mesh Stats");
         if (LoadedModel.IsValid())
         {
-            Model& M = (Model&)LoadedModel; // Cast to raw for access
+            Model& M = LoadedModel.Get(); // Cast to raw for access
             ImGui::Text("Mesh Count: %d", M.meshCount);
             ImGui::Text("Material Count: %d", M.materialCount);
             if (M.meshCount > 0)
