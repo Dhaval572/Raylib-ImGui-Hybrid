@@ -1,7 +1,7 @@
 #pragma once
 
 #include "raylib.h"
-#include <string> // IWYU prgma: keep
+#include <string> // IWYU pragma: keep
 
 namespace Core 
 {
