@@ -7,7 +7,6 @@
 
 namespace Core 
 {
-
     Model ModelLoader::LoadModel(std::string_view Path)
     {
         if (IsFileExtension(Path.data(), ".fbx"))
@@ -23,7 +22,7 @@ namespace Core
 
     Model ModelLoader::LoadFBX(std::string_view Path)
     {
-        ufbx_load_opts opts = { 0 }; 
+        ufbx_load_opts opts = {}; 
         opts.target_axes = ufbx_axes_right_handed_y_up; 
         opts.target_unit_meters = 1.0f;
 
@@ -33,7 +32,7 @@ namespace Core
         if (!scene)
         {
             FLog::Error("Failed to load FBX: {}", error.description.data);
-            return { 0 };
+            return {};
         }
 
         std::vector<Mesh> RayMeshes;
@@ -98,7 +97,7 @@ namespace Core
                 
                 if (VPos.empty()) continue;
 
-                Mesh NewMesh = { 0 };
+                Mesh NewMesh = {};
                 NewMesh.vertexCount = (int)VPos.size();
                 NewMesh.triangleCount = NewMesh.vertexCount / 3;
                 
@@ -129,10 +128,10 @@ namespace Core
              // It's possible to have a hierarchy with no meshes (just bones/empties)
              // We return empty model
              FLog::Debug("FBX loaded but contains no meshes: {}", Path);
-             return { 0 };
+             return {};
         }
         
-        Model NewModel = { 0 };
+        Model NewModel = {};
         NewModel.meshCount = (int)RayMeshes.size();
         NewModel.meshes = (Mesh*)MemAlloc(NewModel.meshCount * sizeof(Mesh));
         

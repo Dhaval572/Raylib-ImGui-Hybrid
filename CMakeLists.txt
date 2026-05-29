@@ -31,7 +31,7 @@ add_library(imgui
 target_include_directories(imgui PUBLIC
     external/imgui
     external/imgui/backends
-    external/raylib/src/external/glfw/include
+    external/raylib/src/external/glfw/include 
 )
 
 
@@ -84,7 +84,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     raylib
     imgui
 )
-
+  
 add_compile_definitions(NOMINMAX)
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
     $<$<CONFIG:Debug>:CORE_DEBUG>
