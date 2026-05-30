@@ -12,8 +12,8 @@ namespace Core
         FWindowResizeEvent(unsigned int InWidth, unsigned int InHeight)
             : Width(InWidth), Height(InHeight) {}
 
-        [[nodiscard]] unsigned int GetWidth() const { return Width; }
-        [[nodiscard]] unsigned int GetHeight() const { return Height; }
+        [[nodiscard]] uint GetWidth() const { return Width; }
+        [[nodiscard]] uint GetHeight() const { return Height; }
 
         [[nodiscard]] std::string ToString() const override
         {

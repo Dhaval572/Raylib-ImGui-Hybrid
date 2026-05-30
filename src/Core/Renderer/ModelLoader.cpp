@@ -56,7 +56,8 @@ namespace Core
                     // Fan triangulation
                     for (size_t v = 2; v < face.num_indices; v++)
                     {
-                         uint32_t context_indices[3] = {
+                         uint32_t context_indices[3] = 
+                        {
                             face.index_begin + 0,
                             face.index_begin + (uint32_t)(v - 1),
                             face.index_begin + (uint32_t)v
@@ -69,14 +70,24 @@ namespace Core
                             {
                                 uint32_t v_idx = fbx_mesh->vertex_indices[ix];
                                 ufbx_vec3 p = fbx_mesh->vertices[v_idx];
-                                VPos.push_back({ (float)p.x, (float)p.y, (float)p.z });
+                                VPos.emplace_back
+                                (
+                                    static_cast<float>(p.x),
+                                    static_cast<float>(p.y),
+                                    static_cast<float>(p.z)
+                                );
                                 
                                 // Normal
                                 if (fbx_mesh->vertex_normal.exists && ix < fbx_mesh->vertex_normal.indices.count)
                                 {
                                     uint32_t n_idx = fbx_mesh->vertex_normal.indices[ix];
                                     ufbx_vec3 n = fbx_mesh->vertex_normal.values[n_idx];
-                                    VNorm.push_back({ (float)n.x, (float)n.y, (float)n.z });
+                                    VNorm.emplace_back
+                                    (
+                                        static_cast<float>(n.x),
+                                        static_cast<float>(n.y),
+                                        static_cast<float>(n.z)
+                                    );
                                 }
                                 
                                 // UV
@@ -84,11 +95,14 @@ namespace Core
                                 {
                                     uint32_t uv_idx = fbx_mesh->vertex_uv.indices[ix];
                                     ufbx_vec2 uv = fbx_mesh->vertex_uv.values[uv_idx];
-                                    VUV.push_back({ (float)uv.x, (float)uv.y });
+                                    VUV.emplace_back
+                                    (
+                                        static_cast<float>(uv.x), static_cast<float>(uv.y)
+                                    );
                                 }
                                 else
                                 {
-                                    VUV.push_back({ 0.0f, 0.0f });
+                                    VUV.emplace_back(0.0f, 0.0f);
                                 }
                             }
                         }
@@ -98,21 +112,21 @@ namespace Core
                 if (VPos.empty()) continue;
 
                 Mesh NewMesh = {};
-                NewMesh.vertexCount = (int)VPos.size();
+                NewMesh.vertexCount = static_cast<int>(VPos.size());
                 NewMesh.triangleCount = NewMesh.vertexCount / 3;
                 
-                NewMesh.vertices = (float*)MemAlloc(NewMesh.vertexCount * 3 * sizeof(float));
+                NewMesh.vertices = static_cast<float*>(MemAlloc(NewMesh.vertexCount * 3 * sizeof(float)));
                 memcpy(NewMesh.vertices, VPos.data(), VPos.size() * sizeof(Vector3));
                 
                 if (!VNorm.empty())
                 {
-                    NewMesh.normals = (float*)MemAlloc(VNorm.size() * 3 * sizeof(float));
+                    NewMesh.normals = static_cast<float*>(MemAlloc(VNorm.size() * 3 * sizeof(float)));
                     memcpy(NewMesh.normals, VNorm.data(), VNorm.size() * sizeof(Vector3));
                 }
                 
                 if (!VUV.empty())
                 {
-                    NewMesh.texcoords = (float*)MemAlloc(VUV.size() * 2 * sizeof(float));
+                    NewMesh.texcoords = static_cast<float*>(MemAlloc(VUV.size() * 2 * sizeof(float)));
                     memcpy(NewMesh.texcoords, VUV.data(), VUV.size() * sizeof(Vector2));
                 }
                 

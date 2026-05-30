@@ -21,11 +21,6 @@ public:
     }
 };
 
-// Core::FApplication* CreateApplication()
-// {
-//     return new FViewerApp();
-// }
-
 std::unique_ptr<Core::FApplication> CreateApplication()
 {
     return std::make_unique<FViewerApp>();
