@@ -3,11 +3,12 @@
 #include "Core/Base/Core.h"
 #include <string>
 #include <concepts>
-#include <functional>
-#include <sstream>
+#include <functional> // IWYU pragma: keep
+#include <sstream> // IWYU pragma: keep
 
-namespace Core {
-
+namespace Core 
+{
+    
     enum class EEventType
     {
         None = 0,

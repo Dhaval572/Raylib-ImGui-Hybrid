@@ -2,7 +2,8 @@
 
 #include <utility>
 
-namespace Core {
+namespace Core 
+{
 
     class FInput
     {

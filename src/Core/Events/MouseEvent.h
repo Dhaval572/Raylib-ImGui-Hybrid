@@ -3,7 +3,8 @@
 #include "Event.h"
 #include <sstream>
 
-namespace Core {
+namespace Core
+{
 
     class FMouseMovedEvent : public FEvent
     {

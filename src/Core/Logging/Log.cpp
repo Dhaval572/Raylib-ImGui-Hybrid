@@ -1,7 +1,8 @@
 #include "Log.h"
 #include <mutex>
 
-namespace Core {
+namespace Core 
+{
 
     static std::mutex s_LogMutex;
 

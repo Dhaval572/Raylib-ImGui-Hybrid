@@ -5,7 +5,8 @@
 
 #include <vector>
 
-namespace Core {
+namespace Core 
+{
 
     class FLayerStack
     {

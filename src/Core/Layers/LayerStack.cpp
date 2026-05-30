@@ -1,7 +1,8 @@
 #include "LayerStack.h"
 #include <algorithm>
 
-namespace Core {
+namespace Core 
+{
 
     FLayerStack::FLayerStack()
     {

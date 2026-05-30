@@ -2,8 +2,8 @@
 #include "Core/Application/Application.h"
 #include <GLFW/glfw3.h>
 
-namespace Core {
-
+namespace Core
+{
     bool FInput::IsKeyPressed(int KeyCode)
     {
         auto Window = static_cast<GLFWwindow*>(FApplication::Get().GetWindow());
@@ -37,5 +37,4 @@ namespace Core {
         auto [X, Y] = GetMousePosition();
         return Y;
     }
-
 }
